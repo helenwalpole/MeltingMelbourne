@@ -1,0 +1,242 @@
+/* ------------------------  */
+/* SECTION 1: GENERAL STYLE  */
+/* ------------------------  */
+
+body {
+  margin: 0;
+  padding: 0;
+  color: rgb(0, 0, 0);
+  font-family: "PT Serif", Georgia, "Times New Roman", Times, serif;
+  overflow: hidden;
+}
+
+/* turn off all user selection to fix issue where moving the slider sometimes also selects text  */
+body * {
+  -webkit-user-drag: none;
+  -moz-user-drag: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+h1 {
+  color: #494845;
+  font-family: "Cabin Sketch", "Cabin Bold", "Gill Sans", "Gill Sans MT",
+    Calibri, sans-serif;
+  font-size: 36pt;
+  font-weight: 700;
+}
+
+h2 {
+  font-family: "Cabin Sketch", "Cabin Bold", "Gill Sans", "Gill Sans MT",
+    Calibri, sans-serif;
+  margin: 10px;
+  /* font-size: 1.2em; */
+}
+
+h3 {
+  font-family: "PT Serif", Georgia, "Times New Roman", Times, serif;
+  margin: 10px;
+  font-size: 1em;
+}
+
+p {
+  font-family: "PT Serif", Georgia, "Times New Roman", Times, serif;
+  font-weight: 400;
+  font-size: 12px;
+  margin: 10px;
+  text-align: left;
+}
+
+hr {
+  width: 30%;
+  color: #afaaa5;
+  text-align: left;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+/* ---------------------------------------  */
+/* SECTION 2: STYLE FOR THE MAP APPEARANCE  */
+/* ---------------------------------------  */
+
+.mapSection {
+  bottom: 0;
+}
+
+.sliderSection {
+  position: relative;
+  height: 200px;
+  clear: both;
+  z-index: 1;
+}
+
+/* make the map full-screen */
+.map {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+}
+
+/* Override Mapbox's default style for the comparison swiper  */
+.mapboxgl-compare .compare-swiper-vertical {
+  background-color: #5c5a55; 
+  top: 90%; /* place the controller at the bottom of screen as a counterpoint to the temperature slider at the top of screen */
+}
+
+/* ----------------------------------------- */
+/* SECTION 3: STYLE FOR THE TEXT OVERLAY BOX */
+/* ----------------------------------------- */
+
+/* Style for the information box/legend */
+.map-overlay {
+  position: absolute;
+  top: 200px;
+  left: 0; 
+  height: 600px;
+  width: 300px;
+  margin: 20px;
+  padding: 10px;
+  background-color: rgba(246, 244, 238, 0.9);
+
+  font-family: "PT Serif", Georgia, "Times New Roman", Times, serif;
+  font-weight: 400;
+  color: #000;
+  overflow: hidden;
+  border-radius: 15px;
+  border: solid 2px #aaaaaa;
+  box-shadow: 5px 5px 16px rgba(0, 0, 0, 0.2);
+}
+
+#databox p {
+  font-size: 14px;
+}
+
+/* centring the animated gif  */
+.centre {
+  display: block;
+  margin: 0 auto;
+}
+
+#legend {
+  font-size: 10px;
+  text-align: center;
+}
+
+.legend {
+  line-height: 18px;
+  border-radius: 3px;
+  bottom: 30px;
+  position: absolute;
+  right: 10px;
+  z-index: 1;
+  font-size: 10px;
+  box-shadow: 5px 5px 16px rgba(0, 0, 0, 0.2);
+}
+
+.legend-circle {
+  display: inline-block;
+  border-radius: 50%;
+  border: 4px solid rgb(204, 204, 204);
+  width: 20px;
+  height: 20px;
+}
+
+.legend-day span {
+  margin: 5px;
+  display: inline-block;
+  vertical-align: middle;
+  font-size: 12px;
+}
+
+/* ------------------------------------------- */
+/* SECTION 4: STYLE FOR THE TEMPERATURE SLIDER */
+/* ------------------------------------------- */
+
+/* Style the lettering in the main heading */
+.main-title {
+  font-size: 30px;
+}
+
+.main-container {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 3fr 1fr;
+  height: 100%;
+  overflow-x: hidden;
+  color: #f6f4ee;
+}
+
+.upper-container {
+  position: relative;
+  background-color: #afaaa5; /* in case automated gradient fails */
+}
+
+.lower-container {
+  background-color: rgba(0, 0, 0, 0);
+}
+
+/* style for the large lettering showing the temperature value  */
+.temperature-text {
+  position: absolute;
+  bottom: 0;
+  right: 50px;
+  font-size: 120px;
+  font-family: "Cabin Sketch", "Cabin", "Arial", Helvetica, sans-serif;
+  /* user-select: none; */
+}
+
+/* style for each of the numbers and increment lines in the temperature scale */
+.temperature-element {
+  font-family: "Cabin Condensed", "Arial Narrow", "Arial", Helvetica, sans-serif;
+  font-weight: 400;
+  text-align: center;
+  display: inline-block;
+  width: 10px; 
+  margin: 0 10px 0 10px;
+  opacity: 0.7;
+}
+
+.temperature-element-line {
+  font-size: 11px;
+}
+
+.temperature-graduation {
+  text-align: center;
+  position: absolute;
+  left: 200px; 
+  bottom: 25px;
+}
+
+.temperature-graduation h1 {
+  line-height: 5px;
+}
+
+.slider-container {
+  width: 138px;
+  height: 80px;
+  margin-top: -30px;
+  left: 170px;
+  position: relative;
+}
+
+.slider-button {
+  position: absolute;
+  left: 37px;
+  top: 3px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px solid white;
+  background-color: #5c5a55;
+  background-position: center;
+  z-index: 2;
+
+  /* transforms cursor into east-west arrow to grab slider, to match the UI of the Mapbox swiper */
+  cursor: ew-resize; 
+  cursor: -webkit-ew-resize;
+  cursor: -moz-ew-resize;
+}

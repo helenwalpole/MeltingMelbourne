@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <!-- Please note: comments in code are for assessment purposes-->
+
+    <!-- Mapbox GL API links -->
+    <script src='https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v1.12.0/mapbox-gl.css' rel='stylesheet' />
+
+    <!-- I've used the mapbox GL compare API to build the map comparison swiper -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-compare/v0.4.0/mapbox-gl-compare.js"></script>
+    <link rel="stylesheet"
+        href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-compare/v0.4.0/mapbox-gl-compare.css"
+        type="text/css" />
+
+    <!-- I've used the VueJS API for the temperature slider -->
+    <script src='https://vuejs.org/js/vue.js'></script>
+
+    <!-- I've used the TweenMax API for the colour change in the temperature slider -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/1.19.1/TweenMax.min.js"></script>
+
+    <!-- I've used the Google fonts API for typefaces -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cabin+Condensed&family=Cabin+Sketch:wght@400;700&family=Cabin:wght@400;700&family=PT+Serif:wght@400;700&display=swap"
+        rel="stylesheet">
+
+    <!-- I've used chart.js to build the graphs  -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+
+    <!-- My stylesheet for this project, placed last so it overrides some of the defaults set in the above APIs -->
+    <link rel="stylesheet" href="s3873037_style.css">
+
+    <title> Melbourne's melting point, HELEN WALPOLE, s3873037 </title>
+</head>
+
+<body>
+    <!-- Section for the map -->
+    <div class="mapSection">
+        <!-- Divs to contain the map  -->
+        <div id="comparison-container">
+            <div id="weekday" class="map"></div>
+            <div id="weekend" class="map"></div>
+        </div>
+        <!-- Divs to contain the text box overlays  -->
+        <div class='map-overlay' id='features'>
+            <div>
+                <h2 class="main-title">Enough's enough!</h2>
+            </div>
+            <div id='databox'>
+                <p>There comes a time when it's just too darn hot to go outside, and the number of pedestrians on city
+                    streets drops away. </p>
+                <p>Explore this map to see if you can find Melbourne's melting point.</p>
+                <!-- I uploaded my gif to flickr so it could be remote-hosted instead of local, since we can only submit an index.html and style.css file -->
+                <img src="https://live.staticflickr.com/65535/50518960397_9bc2642495_o.gif" alt="Melbourne swelters"
+                    title="Melbourne swelters" class="centre" height="200" width="200" style="margin-bottom: 12px;">
+            </div>
+
+            <div id="chartbox"></div>
+            <!-- I have hard-coded the legend as this map doesn't need it to be dynamically created (there's no need for a circle-radius legend as the points are directly labelled) -->
+            <div id='legend'>
+                <div class="legend-day">
+                    <span class="legend-circle" style="background-color: rgba(222, 122, 22, 0.7); "></span>
+                    <span>weekdays</span>
+                    <span class="legend-circle" style="background-color: rgba(198, 101, 224, 0.7); "></span>
+                    <span>weekends</span>
+                    <span>Numbers on map show % of average daily pedestrian traffic at that location.</span>
+                    <hr>
+                    <p>Data covers the period 1 Jan 2015 to 30 Dec 2019.</p>
+                    <p>Sources: <a href="http://www.pedestrian.melbourne.vic.gov.au" target="_blank"
+                            title="City of Melbourne pedestrian counter data">pedestrian.melbourne.vic.gov.au</a>
+                        and <a href="http://www.bom.gov.au/climate/data/" target="_blank"
+                            title="Bureau of Meteorology climate data">bom.gov.au/climate/data/</a>.</p>
+                    <p>Map created by Helen Walpole, October 2020.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section for the temperature slider  -->
+    <div class="sliderSection">
+        <!-- Divs to contain the temperature slider -->
+        <div id="app" class="main-container" @mousemove="mouseMoving" @mouseUp="stopDrag">
+            <!-- This 'upper-container' holds the title and the temperature scale  -->
+            <div class="upper-container" :style="bgStyle">
+                <h2 id="temperature-value" class="temperature-text">{{currentTemperature | round}}&deg;</h2>
+                <div class="temperature-graduation">
+                    <h1>MELBOURNE'S MELTING POINT: how hot is too hot?</h1>
+                    <div class="temperature-element" v-for="el in temperatureGrades" :style="tempElementStyle(el)"
+                        :key="el">
+                        <span class="temperature-element-number">{{el}}</span><br>
+                        <span class="temperature-element-line">|</span>
+                    </div>
+                </div>
+            </div>
+            <!-- This 'lower-container' holds the slider button and associated graphics  -->
+            <div class="lower-container">
+                <div class="slider-container" :style="sliderStyle">
+                    <!-- This svg forms the bell-curve shape  -->
+                    <svg width="150" height="30" viewBox="0 0 150 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M74.3132 0C47.0043 2.44032e-05 50.175 30 7.9179 30H144.27C99.4571 30 101.622 -2.44032e-05 74.3132 0Z"
+                            transform="translate(-7.38794 0.5)" fill="#efe8d7" />
+                    </svg>
+                    <div class="slider-button" :style="buttonStyle" @mouseDown="startDrag"
+                        style="background-image: url('thermometer.png');">
+                        <!-- I created the thermometer image to match the UI of the mapbox swiper handle, as it wasn't very obvious that you could pick it up and move it. -->
+                        <img src="https://live.staticflickr.com/65535/50518787011_3714610178_o.png" height="35" alt=""
+                            style="margin-left: 13px; margin-top: 9px;" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // -----------------------------------------------------
+        // SECTION 1: Temperature slider (built with VueJS)
+        // -----------------------------------------------------
+        // I used the tutorial from Eder Diaz (https://dev.to/ederchrono/making-an-animated-slider---wotw-mkj),
+        // but adapted it a fair bit to customise the width, number of increments and colour gradients.
+        // I have also extended Diaz's functionality so that the slider drives some of the map behaviours.
+
+        const sliderMinX = 0
+        const sliderMaxX = 990 // (33 increments x 30px per increment)
+        // Colour gradient selected from colour brewer as being good for visual differentiability
+        const coldGradient = { start: '#efe8d7', end: '#5c5a55' }
+        const hotGradient = { start: '#fddbc7', end: '#b2182b' }
+
+        const slider = new Vue({
+            el: '#app',
+            data: {
+                temperatureGrades: [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42],
+                dragging: false,
+                initialMouseX: 0,
+                sliderX: 0,
+                initialSliderX: 0,
+                gradientStart: coldGradient.start,
+                gradientEnd: coldGradient.end
+            },
+            filters: {
+                round(num) {
+                    return Math.round(num)
+                }
+            },
+            methods: {
+                startDrag(e) {
+                    this.dragging = true
+                    this.initialMouseX = e.pageX
+                    this.initialSliderX = this.sliderX
+                },
+                stopDrag() {
+                    this.dragging = false
+                },
+                mouseMoving(e) {
+                    if (this.dragging) {
+                        const dragAmount = e.pageX - this.initialMouseX
+                        const targetX = this.initialSliderX + dragAmount
+                        // Keep the slider inside limits
+                        this.sliderX = Math.max(Math.min(targetX, sliderMaxX), sliderMinX)
+                    }
+                    // Set background color to respond to slider
+                    let targetGradient = coldGradient
+                    if (this.currentTemperature >= 36) {
+                        targetGradient = hotGradient
+                    }
+
+                    if (this.gradientStart !== targetGradient.start) {
+                        // Gradient change
+                        TweenLite.to(this, 0.7, {
+                            'gradientStart': targetGradient.start,
+                            'gradientEnd': targetGradient.end
+                        })
+                    }
+                },
+                tempElementStyle(tempNumber) {
+                    const nearDistance = 3
+                    const liftDistance = 12
+
+                    // This is the animation to lift up the element when the current temperature is near it
+                    const diff = Math.abs(this.currentTemperature - tempNumber)
+                    const distY = (diff / nearDistance) - 1
+
+                    // Constrain the distance so that the element doesn't go to the bottom
+                    const elementY = Math.min(distY * liftDistance, 0)
+                    return `transform: translate3d(0, ${elementY}px, 0)`
+                }
+            },
+            computed: {
+                sliderStyle() {
+                    return `transform: translate3d(${this.sliderX}px,0,0)`
+                },
+
+                currentTemperature() {
+                    const tempRangeStart = 9
+                    const tempRange = 33 // from 9 - 42
+                    return (this.sliderX / sliderMaxX * tempRange) + tempRangeStart
+                },
+
+                // Style the background as a changing gradient
+                bgStyle() {
+                    return `background: linear-gradient(to bottom, ${this.gradientStart}, ${this.gradientEnd});`
+                },
+
+                // Style the slider button as a changing solid colour
+                buttonStyle() {
+                    return `background: ${this.gradientEnd};`
+                },
+
+                // This function is where I have made the size of the graduated symbols on the map link to the temperature slider
+                radiusProperty() {
+                    return {
+                        property: `deg_${Math.round(this.currentTemperature)}`,  // This links the slider to the fields in the weekday/weekend layers for each degree (called 'deg_9', 'deg_10' etc)
+                        type: 'interval',
+                        stops: [
+                            [percentIncrements[0], circleRadius[0]], // 50-59%
+                            [percentIncrements[1], circleRadius[1]], // 60-69%
+                            [percentIncrements[2], circleRadius[2]], // 70-79%
+                            [percentIncrements[3], circleRadius[3]], // 80-89%
+                            [percentIncrements[4], circleRadius[4]], // 90-99%
+                            [percentIncrements[5], circleRadius[5]] // Over 100%
+                        ]
+                    }
+                },
+
+                // This function is where I have made the direct labels of pedestrian percentages link to the temperature slider
+                dataValue() {
+                    return [
+                        'concat', [
+                            'to-string', [
+                                'round', ['get', `deg_${Math.round(this.currentTemperature)}`, // There was a weird artefact where some of the label data was rendering as a float with 9 decimal places, this is my resolution
+                                ]]],
+                        '%']
+                },
+            },
+
+            // This 'watch' function gets the above calculations in the 'computed' field to render onto the map.
+            watch: {
+                currentTemperature() {
+                    weekdayMap.setPaintProperty('weekdays', 'circle-radius', this.radiusProperty)
+                    weekendMap.setPaintProperty('weekends', 'circle-radius', this.radiusProperty)
+
+                    weekdayMap.setLayoutProperty('weekdaysLabels', 'text-field', this.dataValue)
+                    weekendMap.setLayoutProperty('weekendsLabels', 'text-field', this.dataValue)
+                }
+            },
+        })
+
+
+        // -----------------------------------------------------
+        // SECTION 2: Map functionality (built with Mapbox GL js)
+        // -----------------------------------------------------
+
+        mapboxgl.accessToken = 'pk.eyJ1IjoiaGVsZW53YWwiLCJhIjoiY2tkNTE2N3BxMWE3MTJybzMxc3RocW0yNCJ9.TnX-HlxcbISLvgMkl5byhA';
+
+        // Import customised basemap to appear on the left of screen to show weekday data
+        var weekdayMap = new mapboxgl.Map({
+            container: 'weekday',
+            style: 'mapbox://styles/helenwal/ckfxv8a9v0m4b19n2bi43fv64',
+            center: [144.96, -37.814],
+            zoom: 14.7,
+            maxZoom: 16.5,
+            minZoom: 13.5,
+            maxBounds: [[144.8744, -37.8479], [145.0536, -37.7774]]
+        });
+
+        // Import same customised basemap to appear on the right  of screen to show weekend data
+        var weekendMap = new mapboxgl.Map({
+            container: 'weekend',
+            style: 'mapbox://styles/helenwal/ckfxv8a9v0m4b19n2bi43fv64',
+            center: [144.96, -37.814],
+            zoom: 14.7,
+            maxZoom: 16.5,
+            minZoom: 13.5,
+            maxBounds: [[144.8744, -37.8479], [145.0536, -37.7774]]
+        });
+
+        // Create a swiper between weekday and weekend maps
+        var container = '#comparison-container';
+        var map = new mapboxgl.Compare(weekdayMap, weekendMap, container);
+        // map.setSlider(500); //sets start location for slider
+
+        // Declare variables 
+        // circle radius interval gradually increases from 5pt to 7pt to account for Flannery compensation
+        // circles can be quite large as there are so few datapoints on the map 
+        var circleRadius = [14, 19, 24, 30, 36, 43];
+        var percentIncrements = [50, 60, 70, 80, 90, 100];
+        var temperatures = ['9 &deg;', '10 &deg;', '11 &deg;', '12 &deg;', '13 &deg;', '14 &deg;', '15 &deg;', '16 &deg;', '17 &deg;', '18 &deg;', '19 &deg;', '20 &deg;', '21 &deg;', '22 &deg;', '23 &deg;', '24 &deg;', '25 &deg;', '26 &deg;', '27 &deg;', '28 &deg;', '29 &deg;', '30 &deg;', '31 &deg;', '32 &deg;', '33 &deg;', '34 &deg;', '35 &deg;', '36 &deg;', '37 &deg;', '38 &deg;', '39 &deg;', '40 &deg;', '41 &deg;', '42 &deg;'];
+        var colours = ['rgba(222,122,22,0.7)', 'rgba(198,101,224,0.7)'];
+
+
+        // Wrap all elements so they wait until after the basemaps have loaded 
+        weekdayMap.on('load', function () {
+
+            // Add navigation control widgets to both maps so it never disappears behind a swipe, remove compass control
+            weekdayMap.addControl(new mapboxgl.NavigationControl({
+                showCompass: false,
+            }), 'bottom-right'
+            );
+            weekendMap.addControl(new mapboxgl.NavigationControl({
+                showCompass: false,
+            }), 'bottom-right'
+            );
+
+            // -----------------------------------------------------
+            // SECTION 3: Add data and interactivity to map
+            // -----------------------------------------------------
+
+            // Load weekday data onto the weekday map and style the symbols as graduated circles.
+            // I have used graduated symbols instead of proportional because proportional took longer to render via the 'watch' and 'computed' funtions, and created an unpleasant lag. 
+            // Since the dots are directly labelled, the circle radii do not need the precision of proportional symbols.
+            weekdayMap.addLayer({
+                'id': 'weekdays',
+                'type': 'circle',
+                'source': {
+                    type: 'vector',
+                    url: 'mapbox://helenwal.6pcq5r73'
+                },
+                'source-layer': 'weekday_data-althl3',
+                paint: {
+                    'circle-color': colours[0],
+                    'circle-stroke-width': 4,
+                    'circle-stroke-color': 'rgba(190, 190, 190, 0.7)',
+                    'circle-radius': slider.radiusProperty
+                }
+            });
+
+            // Load weekday data to directly label the graduated circles
+            weekdayMap.addLayer({
+                'id': 'weekdaysLabels',
+                'type': 'symbol',
+                'source': {
+                    type: 'vector',
+                    url: 'mapbox://helenwal.6pcq5r73'
+                },
+                'source-layer': 'weekday_data-althl3',
+                layout: {
+                    'text-field': [
+                        'concat', [
+                            'to-string', [
+                                'round', ['get', 'deg_9']]], //start with the deg_9 layer, after this the function updates this 'text-field' value dynamically to reflect the layer selected by the slider
+                        '%'],
+
+                    'text-font': [
+                        'Cabin Condensed SemiBold',
+                        'Open Sans Bold',
+                        'Arial Unicode MS Bold'
+                    ],
+                    'text-size': 16
+                },
+                paint: {
+                    'text-color': '#494845'
+                },
+            });
+
+            // Load weekend data onto the weekend map and style the symbols the same way
+            weekendMap.addLayer({
+                'id': 'weekends',
+                'type': 'circle',
+                'source': {
+                    type: 'vector',
+                    url: 'mapbox://helenwal.1ojllp1l'
+                },
+                'source-layer': 'weekend_data-2ftebo',
+                paint: {
+                    'circle-color': colours[1],
+                    'circle-stroke-width': 4, 
+                    'circle-stroke-color': 'rgba(190, 190, 190, 0.7)',
+                    'circle-radius': slider.radiusProperty
+
+                }
+            });
+
+            // Load weekend data to directly label the graduated circles
+            weekendMap.addLayer({
+                'id': 'weekendsLabels',
+                'type': 'symbol',
+                'source': {
+                    type: 'vector',
+                    url: 'mapbox://helenwal.1ojllp1l'
+                },
+                'source-layer': 'weekend_data-2ftebo',
+                layout: {
+                    'text-field': [
+                        'concat', [
+                            'to-string', [
+                                'round', ['get', 'deg_9']]],
+                        '%'],
+                    'text-font': [
+                        'Cabin Condensed SemiBold',
+                        'Open Sans Bold',
+                        'Arial Unicode MS Bold'
+                    ],
+                    'text-size': 16
+                },
+                paint: {
+                    'text-color': '#494845',
+                },
+            });
+
+            // Update cursor to become pointer over a data location, for better accessibilty standards
+            weekdayMap.on('mousemove', function (e) {
+                var weekdayLocations = weekdayMap.queryRenderedFeatures(e.point, {
+                    layers: ['weekdays']
+                });
+                if (weekdayLocations.length > 0) {
+                    weekdayMap.getCanvas().style.cursor = 'pointer';
+                } else { weekdayMap.getCanvas().style.cursor = ''; }
+            });
+            weekendMap.on('mousemove', function (e) {
+                var weekendLocations = weekendMap.queryRenderedFeatures(e.point, {
+                    layers: ['weekends']
+                });
+                if (weekendLocations.length > 0) {
+                    weekendMap.getCanvas().style.cursor = 'pointer';
+                } else { weekendMap.getCanvas().style.cursor = ''; }
+            });
+
+            // -----------------------------------------------------
+            // SECTION 4: Add responsive charts (built with chart.js)
+            // -----------------------------------------------------
+
+            // Add a line graph to the map overlay showing data from either the weekday or weekend data layer
+            weekdayMap.on('mouseenter', 'weekdays', function (g) {
+                // Update databox with narrative text relating to hovered location 
+                document.getElementById('databox').innerHTML = "<p><br>On <span style='background-color: rgba(222, 122, 22, 0.3);'> weekdays</span>, how hot is too hot at </p><h3>" + g.features[0].properties.sensor_description + '?</h3><br>'
+                // Delete old chart (if one exists) and create new one 
+                document.getElementById('chartbox').innerHTML = '<canvas id="myChart" width="280px" height="210px"></canvas>'
+
+                // Add graph of pedestrian percentages by daily temperature on mouseenter
+                var ctx = document.getElementById('myChart').getContext('2d');
+                var myChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['9°', '10°', '11°', '12°', '13°', '14°', '15°', '16°', '17°', '18°', '19°', '20°', '21°', '22°', '23°', '24°', '25°', '26°', '27°', '28°', '29°', '30°', '31°', '32°', '33°', '34°', '35°', '36°', '37°', '38°', '39°', '40°', '41°', '42°'],
+                        datasets: [{
+                            data: [
+                                g.features[0].properties.deg_9,
+                                g.features[0].properties.deg_10,
+                                g.features[0].properties.deg_11,
+                                g.features[0].properties.deg_12,
+                                g.features[0].properties.deg_13,
+                                g.features[0].properties.deg_14,
+                                g.features[0].properties.deg_15,
+                                g.features[0].properties.deg_16,
+                                g.features[0].properties.deg_17,
+                                g.features[0].properties.deg_18,
+                                g.features[0].properties.deg_19,
+                                g.features[0].properties.deg_20,
+                                g.features[0].properties.deg_21,
+                                g.features[0].properties.deg_22,
+                                g.features[0].properties.deg_23,
+                                g.features[0].properties.deg_24,
+                                g.features[0].properties.deg_25,
+                                g.features[0].properties.deg_26,
+                                g.features[0].properties.deg_27,
+                                g.features[0].properties.deg_28,
+                                g.features[0].properties.deg_29,
+                                g.features[0].properties.deg_30,
+                                g.features[0].properties.deg_31,
+                                g.features[0].properties.deg_32,
+                                g.features[0].properties.deg_33,
+                                g.features[0].properties.deg_34,
+                                g.features[0].properties.deg_35,
+                                g.features[0].properties.deg_36,
+                                g.features[0].properties.deg_37,
+                                g.features[0].properties.deg_38,
+                                g.features[0].properties.deg_39,
+                                g.features[0].properties.deg_40,
+                                g.features[0].properties.deg_41,
+                                g.features[0].properties.deg_42],
+                            backgroundColor: ['rgba(0,0,0,0)'],
+                            borderColor: ['#de7a16'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        legend: {
+                            display: false
+                        },
+                        scales: {
+                            yAxes: [{
+                                ticks: {
+                                    beginAtZero: true
+                                }
+                            }]
+                        },
+                        tooltips: { enabled: false },
+                        hover: { mode: null },
+                        events: [],  // This was the only way I could find to fix a bug where the graph flickered when the mouse hovered over the chart
+                        title: {
+                            display: true,
+                            text: ['Graph shows % of average daily pedestrian count.'],
+                            position: 'bottom',
+                            fontColor: '#494845',
+                            fontStyle: 'normal',
+                            fontFamily: "'PT Serif', Georgia, 'Times New Roman', Times, serif",
+                        }
+                    }
+                });
+            });
+
+            // Same as above for the weekend Map 
+            weekendMap.on('mouseenter', 'weekends', function (g) {
+                // Update databox with narrative text relating to hovered location 
+                document.getElementById('databox').innerHTML = "<p><br>On <span style='background-color: rgba(198, 101, 224, 0.3);'> weekends</span>, how hot is too hot at </p><h3>" + g.features[0].properties.sensor_description + '?</h3><br>'
+                // Delete old chart (if one exists) and create new one 
+                document.getElementById('chartbox').innerHTML = '<canvas id="myChart" width="280px" height="210px"></canvas>'
+                // Add graph of pedestrian percentages by daily temperature on mouseenter
+                var ctx = document.getElementById('myChart').getContext('2d');
+
+                var myChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['9°', '10°', '11°', '12°', '13°', '14°', '15°', '16°', '17°', '18°', '19°', '20°', '21°', '22°', '23°', '24°', '25°', '26°', '27°', '28°', '29°', '30°', '31°', '32°', '33°', '34°', '35°', '36°', '37°', '38°', '39°', '40°', '41°', '42°'],
+                        datasets: [{
+                            data: [
+                                g.features[0].properties.deg_9,
+                                g.features[0].properties.deg_10,
+                                g.features[0].properties.deg_11,
+                                g.features[0].properties.deg_12,
+                                g.features[0].properties.deg_13,
+                                g.features[0].properties.deg_14,
+                                g.features[0].properties.deg_15,
+                                g.features[0].properties.deg_16,
+                                g.features[0].properties.deg_17,
+                                g.features[0].properties.deg_18,
+                                g.features[0].properties.deg_19,
+                                g.features[0].properties.deg_20,
+                                g.features[0].properties.deg_21,
+                                g.features[0].properties.deg_22,
+                                g.features[0].properties.deg_23,
+                                g.features[0].properties.deg_24,
+                                g.features[0].properties.deg_25,
+                                g.features[0].properties.deg_26,
+                                g.features[0].properties.deg_27,
+                                g.features[0].properties.deg_28,
+                                g.features[0].properties.deg_29,
+                                g.features[0].properties.deg_30,
+                                g.features[0].properties.deg_31,
+                                g.features[0].properties.deg_32,
+                                g.features[0].properties.deg_33,
+                                g.features[0].properties.deg_34,
+                                g.features[0].properties.deg_35,
+                                g.features[0].properties.deg_36,
+                                g.features[0].properties.deg_37,
+                                g.features[0].properties.deg_38,
+                                g.features[0].properties.deg_39,
+                                g.features[0].properties.deg_40,
+                                g.features[0].properties.deg_41,
+                                g.features[0].properties.deg_42],
+                            backgroundColor: ['rgba(0,0,0,0)'],
+                            borderColor: ['#c665e0'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        legend: {
+                            display: false
+                        },
+                        scales: {
+                            yAxes: [{
+                                ticks: {
+                                    beginAtZero: true
+                                }
+                            }],
+                            gridlines: {
+                                color: 'rgb(255,0,0)'
+                            }
+                        },
+                        tooltips: { enabled: false },
+                        hover: { mode: null },
+                        events: [],
+                        title: {
+                            display: true,
+                            text: ['Graph shows % of average daily pedestrian count.'],
+                            position: 'bottom',
+                            fontColor: '#494845',
+                            fontStyle: 'normal',
+                            fontFamily: "'PT Serif', Georgia, 'Times New Roman', Times, serif",
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</body>
